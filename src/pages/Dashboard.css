@@ -219,6 +219,76 @@
   color: #f87171;
 }
 
+/* Search & filter controls */
+.list-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.55rem 0.75rem 0.55rem 2.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: white;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.search-input:focus {
+  border-color: #7c3aed;
+}
+
+.filter-select {
+  padding: 0.55rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.filter-select option {
+  background: #1e2333;
+  color: white;
+}
+
+.filter-select.new         { color: #818cf8; border-color: rgba(129,140,248,0.4); }
+.filter-select.in-progress { color: #60a5fa; border-color: rgba(96,165,250,0.4); }
+.filter-select.booked      { color: #facc15; border-color: rgba(250,204,21,0.4); }
+.filter-select.completed   { color: #4ade80; border-color: rgba(74,222,128,0.4); }
+.filter-select.cancelled   { color: #f87171; border-color: rgba(248,113,113,0.4); }
+
 /* Status select */
 .status-select {
   padding: 0.35rem 0.6rem;
@@ -236,9 +306,77 @@
   border-color: #7c3aed;
 }
 
+.status-select.new        { color: #818cf8; border-color: rgba(129, 140, 248, 0.4); }
+.status-select.in-progress { color: #60a5fa; border-color: rgba(96, 165, 250, 0.4); }
+.status-select.booked     { color: #facc15; border-color: rgba(250, 204, 21, 0.4); }
+.status-select.completed  { color: #4ade80; border-color: rgba(74, 222, 128, 0.4); }
+.status-select.cancelled  { color: #f87171; border-color: rgba(248, 113, 113, 0.4); }
+
 .status-select option {
   background: #1e2333;
   color: white;
+}
+
+.status-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Status select loader wrapper */
+.status-select-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.status-select-wrapper .status-select {
+  width: 100%;
+}
+
+/* Spinner used inside select wrapper and status badge */
+.status-spinner {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: statusSpin 0.55s linear infinite;
+  flex-shrink: 0;
+}
+
+.status-select-wrapper .status-spinner {
+  position: absolute;
+  right: 26px;
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.status-loading-mobile {
+  width: 100%;
+  padding: 0.35rem 0.6rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 30px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.status-loading-mobile .status-spinner {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.status-badge {
+  gap: 0.35rem;
+}
+
+@keyframes statusSpin {
+  to { transform: rotate(360deg); }
 }
 
 /* Empty state */
