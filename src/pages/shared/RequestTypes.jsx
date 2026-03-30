@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { requestTypeAPI } from '../../services/api';
-import { Plus, ListChecks } from 'lucide-react';
+import { Plus, ListChecks, Trash2 } from 'lucide-react';
 import '../Dashboard.css';
 import './RequestTypes.css';
 
@@ -12,6 +12,8 @@ export default function RequestTypes() {
   const [newType, setNewType] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [deletingId, setDeletingId] = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
 
   useEffect(() => {
     const fetchTypes = async () => {
@@ -47,6 +49,21 @@ export default function RequestTypes() {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && isValid && !submitting) {
       handleAdd();
+    }
+  };
+
+  const handleDeleteClick = (id) => setConfirmId(id);
+
+  const handleDeleteConfirm = async () => {
+    setDeletingId(confirmId);
+    setConfirmId(null);
+    try {
+      await requestTypeAPI.delete(confirmId);
+      setTypes((prev) => prev.filter((t) => t._id !== confirmId));
+    } catch (err) {
+      console.error('Failed to delete request type:', err.message);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -98,12 +115,24 @@ export default function RequestTypes() {
       </div>
 
       <div className="table-container">
+        {confirmId && (
+          <div className="rt-confirm-overlay">
+            <div className="rt-confirm-box">
+              <p>Delete <strong>{types.find((t) => t._id === confirmId)?.name}</strong>?</p>
+              <div className="rt-confirm-actions">
+                <button className="rt-confirm-cancel" onClick={() => setConfirmId(null)}>Cancel</button>
+                <button className="rt-confirm-delete" onClick={handleDeleteConfirm}>Delete</button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="table-wrapper">
           <table className="data-table">
             <thead>
               <tr>
                 <th>#</th>
                 <th>Request Type</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -111,6 +140,15 @@ export default function RequestTypes() {
                 <tr key={t._id}>
                   <td>{i + 1}</td>
                   <td style={{ color: 'white', fontWeight: 500 }}>{t.name}</td>
+                  <td className="rt-action-cell">
+                    {deletingId === t._id ? (
+                      <span className="status-spinner rt-delete-spinner" />
+                    ) : (
+                      <button className="rt-delete-btn" onClick={() => handleDeleteClick(t._id)} title="Delete">
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -123,7 +161,16 @@ export default function RequestTypes() {
             <div className="mobile-card" key={t._id}>
               <div className="mobile-card-header">
                 <h4>{t.name}</h4>
-                <span className="status-badge new">#{i + 1}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span className="status-badge new">#{i + 1}</span>
+                  {deletingId === t._id ? (
+                    <span className="status-spinner" style={{ color: '#f87171' }} />
+                  ) : (
+                    <button className="rt-delete-btn" onClick={() => handleDeleteClick(t._id)} title="Delete">
+                      <Trash2 size={15} />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
