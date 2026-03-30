@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getRequestTypes, createRequestType } = require('../controllers/requestTypeController');
+const { getRequestTypes, createRequestType, deleteRequestType } = require('../controllers/requestTypeController');
 const { protect, authorize } = require('../middleware/auth');
 const { body } = require('express-validator');
 const { validationResult } = require('express-validator');
@@ -32,5 +32,8 @@ router.use(protect, authorize('ADMIN', 'VENDOR'));
 router.route('/')
   .get(getRequestTypes)
   .post(createValidator, createRequestType);
+
+router.route('/:id')
+  .delete(deleteRequestType);
 
 module.exports = router;
