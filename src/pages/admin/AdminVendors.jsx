@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { vendorAPI } from '../../services/api';
 import Modal from '../../components/Modal';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users, Search } from 'lucide-react';
 import '../Dashboard.css';
 
 export default function AdminVendors() {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
@@ -81,6 +82,19 @@ export default function AdminVendors() {
         </button>
       </div>
 
+      <div className="list-controls">
+        <div className="search-box">
+          <Search size={15} className="search-icon" />
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search by name, mobile, area, state, platform…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="table-container">
         <div className="table-wrapper">
           <table className="data-table">
@@ -94,7 +108,17 @@ export default function AdminVendors() {
               </tr>
             </thead>
             <tbody>
-              {vendors.map((v) => (
+              {vendors
+                .filter((v) => {
+                  const q = searchQuery.toLowerCase();
+                  return !q ||
+                    v.name?.toLowerCase().includes(q) ||
+                    v.mobile?.toLowerCase().includes(q) ||
+                    v.area?.toLowerCase().includes(q) ||
+                    v.state?.toLowerCase().includes(q) ||
+                    v.platformName?.toLowerCase().includes(q);
+                })
+                .map((v) => (
                 <tr key={v._id}>
                   <td style={{ color: 'white', fontWeight: 500 }}>{v.name}</td>
                   <td>{v.mobile}</td>
@@ -111,7 +135,17 @@ export default function AdminVendors() {
 
         {/* Mobile cards */}
         <div className="mobile-cards">
-          {vendors.map((v) => (
+          {vendors
+            .filter((v) => {
+              const q = searchQuery.toLowerCase();
+              return !q ||
+                v.name?.toLowerCase().includes(q) ||
+                v.mobile?.toLowerCase().includes(q) ||
+                v.area?.toLowerCase().includes(q) ||
+                v.state?.toLowerCase().includes(q) ||
+                v.platformName?.toLowerCase().includes(q);
+            })
+            .map((v) => (
             <div className="mobile-card" key={v._id}>
               <div className="mobile-card-header">
                 <h4>{v.name}</h4>
