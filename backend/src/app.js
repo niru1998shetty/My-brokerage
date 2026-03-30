@@ -15,9 +15,19 @@ const app = express();
 // ─── Global Middleware ───────────────────────────────────
 
 // CORS — allow React Vite frontend
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map((u) => u.trim())
+  : ['https://my-brokerage.vercel.app', 'http://localhost:5173', 'http://localhost:5174'];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );
