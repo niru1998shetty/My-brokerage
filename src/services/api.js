@@ -80,4 +80,6 @@ export const requestTypeAPI = {
       method: 'POST',
       body: JSON.stringify({ name }),
     }),
+  delete: (id) =>
+    request(`/request-types/${id}`, { method: 'DELETE' }),
 };
