@@ -1,0 +1,298 @@
+import { useState, useEffect } from 'react';
+import { customerAPI, requestTypeAPI } from '../../services/api';
+import Modal from '../../components/Modal';
+import {
+  Plus,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Bookmark,
+} from 'lucide-react';
+import '../Dashboard.css';
+
+const STATUS_DISPLAY = {
+  NEW: 'New',
+  IN_PROGRESS: 'In-Progress',
+  BOOKED: 'Booked',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
+};
+
+export default function VendorDashboard() {
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [requestTypes, setRequestTypes] = useState([]);
+  const [form, setForm] = useState({
+    customerName: '',
+    mobile: '',
+    area: '',
+    typeOfRequest: '',
+  });
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const [custRes, typesRes] = await Promise.all([
+          customerAPI.getMine({ limit: 100 }),
+          requestTypeAPI.getAll(),
+        ]);
+        setCustomers(custRes.data);
+        setRequestTypes(typesRes.data);
+      } catch (err) {
+        console.error('Failed to load data:', err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCustomers();
+  }, []);
+
+  const newCount = customers.filter((c) => c.status === 'NEW').length;
+  const inProgress = customers.filter((c) => c.status === 'IN_PROGRESS').length;
+  const booked = customers.filter((c) => c.status === 'BOOKED').length;
+  const completed = customers.filter((c) => c.status === 'COMPLETED').length;
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.customerName || !form.mobile) return;
+    setSubmitting(true);
+    try {
+      const res = await customerAPI.create(form);
+      setCustomers((prev) => [res.data, ...prev]);
+      setForm({ customerName: '', mobile: '', area: '', typeOfRequest: '' });
+      setModalOpen(false);
+    } catch (err) {
+      console.error('Failed to add customer:', err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleStatusChange = async (customerId, newStatus) => {
+    try {
+      await customerAPI.updateStatus(customerId, newStatus);
+      setCustomers((prev) =>
+        prev.map((c) => (c._id === customerId ? { ...c, status: newStatus } : c))
+      );
+    } catch (err) {
+      console.error('Failed to update status:', err.message);
+    }
+  };
+
+  const statusClass = (status) => (STATUS_DISPLAY[status] || status).toLowerCase().replace(/\s+/g, '-');
+
+  if (loading) {
+    return <div className="empty-state"><p>Loading customers...</p></div>;
+  }
+
+  return (
+    <div>
+      <div className="stat-cards">
+        <div className="stat-card">
+          <div className="stat-icon cyan">
+            <Bookmark size={24} />
+          </div>
+          <div className="stat-info">
+            <h3>{newCount}</h3>
+            <p>New</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon blue">
+            <Clock size={24} />
+          </div>
+          <div className="stat-info">
+            <h3>{inProgress}</h3>
+            <p>In-Progress</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon purple">
+            <CheckCircle2 size={24} />
+          </div>
+          <div className="stat-info">
+            <h3>{booked}</h3>
+            <p>Booked</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon green">
+            <CheckCircle2 size={24} />
+          </div>
+          <div className="stat-info">
+            <h3>{completed}</h3>
+            <p>Completed</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="section-header">
+        <h2>My Customers</h2>
+        <button className="add-btn" onClick={() => setModalOpen(true)}>
+          <Plus size={18} />
+          Add Customer
+        </button>
+      </div>
+
+      <div className="table-container">
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>Mobile</th>
+                <th>Area</th>
+                <th>Type of Request</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {customers.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    <div className="empty-state">
+                      <p>No customers yet. Click "Add Customer" to get started.</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                customers.map((c) => {
+                  const isAdminOnly = c.status === 'COMPLETED' || c.status === 'CANCELLED';
+                  return (
+                    <tr key={c._id}>
+                      <td style={{ color: 'white', fontWeight: 500 }}>{c.customerName}</td>
+                      <td>{c.mobile}</td>
+                      <td>{c.area}</td>
+                      <td>{c.typeOfRequest}</td>
+                      <td>
+                        {isAdminOnly ? (
+                          <span className={`status-badge ${statusClass(c.status)}`}>
+                            {STATUS_DISPLAY[c.status] || c.status}
+                          </span>
+                        ) : (
+                          <select
+                            className="status-select"
+                            value={c.status}
+                            onChange={(e) => handleStatusChange(c._id, e.target.value)}
+                          >
+                            <option value="NEW">New</option>
+                            <option value="IN_PROGRESS">In-Progress</option>
+                            <option value="BOOKED">Booked</option>
+                          </select>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile cards */}
+        <div className="mobile-cards">
+          {customers.length === 0 ? (
+            <div className="empty-state">
+              <p>No customers yet. Click "Add Customer" to get started.</p>
+            </div>
+          ) : (
+            customers.map((c) => {
+              const isAdminOnly = c.status === 'COMPLETED' || c.status === 'CANCELLED';
+              return (
+                <div className="mobile-card" key={c._id}>
+                  <div className="mobile-card-header">
+                    <h4>{c.customerName}</h4>
+                    <span className={`status-badge ${statusClass(c.status)}`}>{STATUS_DISPLAY[c.status] || c.status}</span>
+                  </div>
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Mobile</span>
+                    <span className="mobile-card-value">{c.mobile}</span>
+                  </div>
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Area</span>
+                    <span className="mobile-card-value">{c.area}</span>
+                  </div>
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Request</span>
+                    <span className="mobile-card-value">{c.typeOfRequest}</span>
+                  </div>
+                  {!isAdminOnly && (
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <select
+                        className="status-select"
+                        value={c.status}
+                        onChange={(e) => handleStatusChange(c._id, e.target.value)}
+                        style={{ width: '100%' }}
+                      >
+                        <option value="NEW">New</option>
+                        <option value="IN_PROGRESS">In-Progress</option>
+                        <option value="BOOKED">Booked</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Add New Customer">
+        <form className="modal-form" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Customer Name</label>
+            <input
+              name="customerName"
+              placeholder="Enter customer name"
+              value={form.customerName}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Mobile Number</label>
+            <input
+              name="mobile"
+              placeholder="Enter mobile number"
+              value={form.mobile}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Area</label>
+            <input
+              name="area"
+              placeholder="Enter area"
+              value={form.area}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="form-group">
+            <label>Type of Request</label>
+            <select name="typeOfRequest" value={form.typeOfRequest} onChange={handleChange} required>
+              <option value="">Select request type</option>
+              {requestTypes.map((rt) => (
+                <option key={rt._id} value={rt.name}>{rt.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-actions">
+            <button type="button" className="btn-secondary" onClick={() => setModalOpen(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary" disabled={submitting}>
+              {submitting ? 'Saving...' : 'Save Customer'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}
