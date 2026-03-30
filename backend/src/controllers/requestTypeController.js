@@ -46,4 +46,25 @@ const createRequestType = async (req, res, next) => {
   }
 };
 
-module.exports = { getRequestTypes, createRequestType };
+/**
+ * @desc    Delete a request type
+ * @route   DELETE /api/request-types/:id
+ * @access  Authenticated (Admin + Vendor)
+ */
+const deleteRequestType = async (req, res, next) => {
+  try {
+    const type = await RequestType.findByIdAndDelete(req.params.id);
+    if (!type) {
+      throw new ApiError('Request type not found', 404);
+    }
+    res.status(200).json({
+      success: true,
+      message: 'Request type deleted successfully',
+      data: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { getRequestTypes, createRequestType, deleteRequestType };
